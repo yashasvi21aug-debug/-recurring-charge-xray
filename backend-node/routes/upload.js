@@ -16,7 +16,7 @@ const db = require("../db");
 const router = express.Router();
 
 const upload = multer({ dest: "uploads/" });
-const PYTHON_API_URL = "http://127.0.0.1:8000/analyze";
+const PYTHON_API_URL = process.env.PYTHON_API_URL || "http://127.0.0.1:8000/analyze";
 
 // GET /api/upload -- returns all past scans, most recent first
 router.get("/", (req, res) => {
