@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-const API_URL = "http://localhost:5000/api/upload";
+const API_URL = "https://recurring-charge-xray-backend.onrender.com/api/upload";
 
 function App() {
   const [file, setFile] = useState(null);
