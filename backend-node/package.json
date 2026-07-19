@@ -1,0 +1,21 @@
+{
+  "name": "recurring-charge-xray-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Recurring Charge X-Ray",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "form-data": "^4.0.6",
+    "multer": "^2.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
