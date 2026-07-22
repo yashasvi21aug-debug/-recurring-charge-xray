@@ -63,7 +63,7 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid email or password." });
   }
 
-  const JWT_SECRET = process.env.JWT_SECRET || "temporary-dev-secret-change-this-later";
+  const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
 
   res.json({ token, email: user.email });
 });
