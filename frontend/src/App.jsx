@@ -1,27 +1,68 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-const API_URL = "https://recurring-charge-xray-backend.onrender.com/api/upload";
+const API_BASE = "http://localhost:5000/api";
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [authMode, setAuthMode] = useState("login"); // login | signup
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+
   const [file, setFile] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | scanning | done | error
+  const [status, setStatus] = useState("idle");
   const [results, setResults] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    if (token) fetchHistory();
+  }, [token]);
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(`${API_BASE}/upload`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return; // token might be invalid/expired
       const data = await response.json();
       setHistory(data);
     } catch (err) {
       console.error("Couldn't load scan history:", err);
     }
+  };
+
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+
+    try {
+      const response = await fetch(`${API_BASE}/auth/${authMode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authEmail, password: authPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthError(data.error || "Something went wrong.");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+    } catch (err) {
+      setAuthError("Couldn't reach the server. Is it running?");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setResults([]);
+    setHistory([]);
   };
 
   const handleFileChange = (e) => {
@@ -40,8 +81,9 @@ function App() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_BASE}/upload`, {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
@@ -71,10 +113,68 @@ function App() {
     });
   };
 
+  // ---- LOGGED OUT VIEW ----
+  if (!token) {
+    return (
+      <div className="page">
+        <header className="header">
+          <span className="eyebrow">Recurring Charge X-Ray</span>
+          <h1>See what's quietly repeating.</h1>
+          <p className="subtitle">
+            {authMode === "login" ? "Log in to see your scans." : "Create an account to get started."}
+          </p>
+        </header>
+
+        <section className="scan-panel">
+          <form onSubmit={handleAuthSubmit} className="auth-form">
+            <input
+              className="auth-input"
+              type="email"
+              placeholder="Email"
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+              required
+            />
+            <input
+              className="auth-input"
+              type="password"
+              placeholder="Password"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              required
+            />
+            <button className="scan-button" type="submit">
+              {authMode === "login" ? "Log In" : "Sign Up"}
+            </button>
+          </form>
+
+          {authError && <p className="error-text">{authError}</p>}
+
+          <p className="auth-switch">
+            {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+            <button
+              className="auth-switch-link"
+              onClick={() => {
+                setAuthMode(authMode === "login" ? "signup" : "login");
+                setAuthError("");
+              }}
+            >
+              {authMode === "login" ? "Sign up" : "Log in"}
+            </button>
+          </p>
+        </section>
+      </div>
+    );
+  }
+
+  // ---- LOGGED IN VIEW ----
   return (
     <div className="page">
       <header className="header">
-        <span className="eyebrow">Recurring Charge X-Ray</span>
+        <div className="header-top">
+          <span className="eyebrow">Recurring Charge X-Ray</span>
+          <button className="logout-button" onClick={handleLogout}>Log out</button>
+        </div>
         <h1>See what's quietly repeating.</h1>
         <p className="subtitle">
           Upload a transaction CSV. We'll scan it for subscriptions and recurring

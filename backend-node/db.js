@@ -17,5 +17,19 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `);
+// Create a table for user accounts
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+try {
+  db.exec(`ALTER TABLE scans ADD COLUMN user_id INTEGER REFERENCES users(id)`);
+} catch (err) {
+  // Expected after the first run -- column already exists
+}
 
 module.exports = db;
